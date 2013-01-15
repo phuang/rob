@@ -1,0 +1,6 @@
+[submodule "gyp"]
+	path = gyp
+	url = http://git.chromium.org/external/gyp.git
+[submodule "gtest"]
+	path = gtest
+	url = http://git.chromium.org/external/googletest.git
