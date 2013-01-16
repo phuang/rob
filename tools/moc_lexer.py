@@ -54,10 +54,12 @@ class Lexer(object):
       'PROTECTED',
       'NAMESPACE',
       'VIRTUAL',
+      'EXPLICIT',
       'RETURN',
       'CONST',
       'INCLUDE',
       'DEFINE',
+      'IF',
 
     # Data types
       'FLOAT',
@@ -65,6 +67,7 @@ class Lexer(object):
       'INT',
       'HEX',
       'STRING',
+      'CHAR',
 
     # Operators
       'LSHIFT',
@@ -75,7 +78,6 @@ class Lexer(object):
   # matched against keywords, to determine if the token is actually a keyword.
   keywords = {
     'class' : 'CLASS',
-    'describe' : 'DESCRIBE',
     'enum'  : 'ENUM',
     'namespace' : 'NAMESPACE',
     'static' : 'STATIC',
@@ -93,7 +95,7 @@ class Lexer(object):
 
   # 'literals' is a value expected by lex which specifies a list of valid
   # literal tokens, meaning the token type and token value are identical.
-  literals = '"*.(){}[],;:=+-/~|&^?'
+  literals = '"*.(){}[],;:=+-/~|&^?!<>%'
 
   # Token definitions
   #
@@ -126,6 +128,10 @@ class Lexer(object):
     self.AddLines(t.value.count('\n'))
     return t
 
+  def t_CHAR(self, t):
+    r"'(.|(\\.))'"
+    return t
+
   # A C or C++ style comment:  /* xxx */ or //
   def t_COMMENT(self, t):
     r'(/\*(.|\n)*?\*/)|(//.*(\n[ \t]*//.*)*)'
@@ -134,19 +140,25 @@ class Lexer(object):
 
   # Return a "preprocessor" include block
   def t_INCLUDE(self, t):
-    r'\#include .*\n'
+    r'\#[ \t]*include .*\n'
     self.AddLines(t.value.count('\n'))
     return t
   
   # Return a "preprocessor" define block
   def t_DEFINE(self, t):
-    r'\#define ([^\\\n]*\n|([^\\\n]*(\\\n))*[^\\\n]*\n)'
+    r'\#[ \t]*define ([^\\\n]*\n|([^\\\n]*(\\\n))*[^\\\n]*\n)'
+    self.AddLines(t.value.count('\n'))
+    return t
+  
+  # Return a "preprocessor" if block
+  def t_IF(self, t):
+    r'\#[ \t]*if (.*?(\n))*[ \t]*\#[ \t]*endif[ \t]*'
     self.AddLines(t.value.count('\n'))
     return t
 
   # A symbol or keyword.
   def t_KEYWORD_SYMBOL(self, t):
-    r'_?[A-Za-z][A-Za-z_0-9]*'
+    r'[_A-Za-z][A-Za-z_0-9]*'
 
     # All non-keywords are assumed to be symbols
     t.type = self.keywords.get(t.value, 'SYMBOL')
@@ -257,7 +269,7 @@ def TextToTokens(source):
 
 
 def Main(args):
-  filenames = ['counter.h']
+  filenames = args
 
   try:
     tokens = FilesToTokens(filenames, True)
