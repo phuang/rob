@@ -24,6 +24,7 @@ class ROB_EXPORT Object {
   const Variant& property(const char* name) const;
 
  protected:
+  virtual int MetaCall(int id, void** args);
 
  private:
 
