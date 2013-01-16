@@ -60,14 +60,43 @@ class Lexer(object):
       'INCLUDE',
       'DEFINE',
       'IF',
+      'OPERATOR',
+      'DYNAMIC_CAST',
+      'STATIC_CAST',
+      'REINTERPRET_CAST',
+      'CONST_CAST',
+      'NEW',
+      'DELETE',
+      'SIZEOF',
+      'UNION',
+      'THIS',
+      'FRIEND',
+      'USING',
+      'SCOPE',
+      'R_SIGNAL',
+      'R_SLOT',
+      'R_OBJECT',
 
-    # Data types
-      'FLOAT',
-      'OCT',
+
+    # Data type
+      'BOOL',
       'INT',
-      'HEX',
-      'STRING',
+      'LONG',
       'CHAR',
+      'SHORT',
+      'DOUBLE',
+      'FLOAT',
+      'VOID',
+      'UNSIGNED',
+      'SIGNED',
+    
+    # Value
+      'V_FLOAT',
+      'V_OCT',
+      'V_INT',
+      'V_HEX',
+      'V_STRING',
+      'V_CHAR',
 
     # Operators
       'LSHIFT',
@@ -91,6 +120,31 @@ class Lexer(object):
     'explicit' : 'EXPLICIT',
     'return' : 'RETURN',
     'const' : 'CONST',
+    'operator' : 'OPERATOR',
+    'dynamic_cast' : 'DYNAMIC_CAST',
+    'static_cast' : 'STATIC_CAST',
+    'reinterpret_cast' : 'REINTERPRET_CAST',
+    'const_cast' : 'CONST_CAST',
+    'new' : 'NEW',
+    'delete' : 'DELETE',
+    'sizeof' : 'SIZEOF',
+    'union' : 'UNION',
+    'this' : 'THIS',
+    'friend' : 'FRIEND',
+    'using' : 'USING',
+    'R_SIGNAL' : 'R_SIGNAL',
+    'R_SLOT' : 'R_SLOT',
+    'R_OBJECT' : 'R_OBJECT',
+    'bool' : 'BOOL',
+    'int' : 'INT',
+    'long' : 'LONG',
+    'char' : 'CHAR',
+    'short' : 'SHORT',
+    'double' : 'DOUBLE',
+    'float' : 'FLOAT',
+    'void' : 'VOID',
+    'signed' : 'SIGNED',
+    'unsigned' : 'UNSIGNED',
   }
 
   # 'literals' is a value expected by lex which specifies a list of valid
@@ -108,10 +162,11 @@ class Lexer(object):
   t_ignore = ' \t'
 
   # Constant values
-  t_FLOAT = r'-?(\d+\.\d*|\d*\.\d+)([Ee][+-]?\d+)?|-?\d+[Ee][+-]?\d+'
-  t_INT = r'-?[0-9]+[uU]?'
-  t_OCT = r'-?0[0-7]+'
-  t_HEX = r'-?0[Xx][0-9A-Fa-f]+'
+  t_V_FLOAT = r'-?(\d+\.\d*|\d*\.\d+)([Ee][+-]?\d+)?|-?\d+[Ee][+-]?\d+'
+  t_V_INT = r'-?[0-9]+[uU]?'
+  t_V_OCT = r'-?0[0-7]+'
+  t_V_HEX = r'-?0[Xx][0-9A-Fa-f]+'
+  t_V_CHAR = r'\'(.|(\\.))\''
   t_LSHIFT = r'<<'
   t_RSHIFT = r'>>'
 
@@ -120,16 +175,10 @@ class Lexer(object):
     r'\n+'
     self.AddLines(len(t.value))
 
-  # We do not process escapes in the IDL strings.  Strings are exclusively
-  # used for attributes, and not used as typical 'C' constants.
-  def t_STRING(self, t):
-    r'"[^"]*"'
+  def t_V_STRING(self, t):
+    r'"[^"\\]*(?:\\.[^"\\]*)*"'
     t.value = t.value[1:-1]
     self.AddLines(t.value.count('\n'))
-    return t
-
-  def t_CHAR(self, t):
-    r"'(.|(\\.))'"
     return t
 
   # A C or C++ style comment:  /* xxx */ or //
@@ -154,6 +203,10 @@ class Lexer(object):
   def t_IF(self, t):
     r'\#[ \t]*if (.*?(\n))*[ \t]*\#[ \t]*endif[ \t]*'
     self.AddLines(t.value.count('\n'))
+    return t
+  
+  def t_SCOPE(self, t):
+    r'::'
     return t
 
   # A symbol or keyword.
@@ -273,7 +326,7 @@ def Main(args):
 
   try:
     tokens = FilesToTokens(filenames, True)
-    for tok in [tok for tok in tokens if tok.type == 'DEFINE' ]:
+    for tok in [tok for tok in tokens ]:
       print tok
   
   except lex.LexError as le:

@@ -6,7 +6,11 @@
     a \
     c
 
-struct A {
+namespace rob {
+
+struct ClassA {
+  R_OBJECT;
+  R_SLOT void HelloWorld();
   long long a;
   long long b;
   long long c;
@@ -14,7 +18,7 @@ struct A {
 
 class Counter : public QObject
 {
-  Q_OBJECT
+  R_OBJECT
  public:
   enum CounterFlags {
     One = 1,
@@ -24,7 +28,7 @@ class Counter : public QObject
   Q_FLAGS(CounterFlags);
 
  
- public slots:
+ public:
   struct A valueA() const { return m_a; }
   const struct A& valueAR() const { return m_a; }
   const struct A* valueAP() const { return &m_a; }
@@ -46,12 +50,15 @@ class Counter : public QObject
 
 class CounterEx : public Counter
 {
-  Q_OBJECT
- public slots:
+  R_OBJECT
+ public:
   virtual void setValue(int newValue);
 };
 
-class AA: public virtual QObject, public virtual Counter {
-  Q_OBJECT
+class AA: public QObject {
+  R_OBJECT
 };
 
+const char* name = "\"Hello World\"";
+
+}
