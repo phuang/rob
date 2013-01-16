@@ -1,5 +1,11 @@
 #include <QObject>
 
+#define A(x) a
+
+#define B(x) \
+    a \
+    c
+
 struct A {
   long long a;
   long long b;

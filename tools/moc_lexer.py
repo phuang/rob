@@ -53,10 +53,11 @@ class Lexer(object):
       'PRIVATE',
       'PROTECTED',
       'NAMESPACE',
-      'INCLUDE',
       'VIRTUAL',
       'RETURN',
       'CONST',
+      'INCLUDE',
+      'DEFINE',
 
     # Data types
       'FLOAT',
@@ -131,9 +132,15 @@ class Lexer(object):
     self.AddLines(t.value.count('\n'))
     return t
 
-  # Return a "preprocessor" inline block
+  # Return a "preprocessor" include block
   def t_INCLUDE(self, t):
     r'\#include .*\n'
+    self.AddLines(t.value.count('\n'))
+    return t
+  
+  # Return a "preprocessor" define block
+  def t_DEFINE(self, t):
+    r'\#define ([^\\\n]*\n|([^\\\n]*(\\\n))*[^\\\n]*\n)'
     self.AddLines(t.value.count('\n'))
     return t
 
@@ -254,9 +261,7 @@ def Main(args):
 
   try:
     tokens = FilesToTokens(filenames, True)
-    # symbols = [tok.value for tok in tokens if tok.type == 'SYMBOL' ]
-    # print symbols
-    for tok in tokens:
+    for tok in [tok for tok in tokens if tok.type == 'DEFINE' ]:
       print tok
   
   except lex.LexError as le:
