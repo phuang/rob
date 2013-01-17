@@ -6,12 +6,31 @@ from moc_lexer import Lexer
 from ply import lex
 
 class TypeDef(object):
-  def __init__(self):
+  def __init__(self, name):
     object.__init__(self)
+    self.name = name
+
+  def __str__(self):
+    return 'TypeDef[%s]' % self.name
+
+  def __repr__(self):
+    return 'TypeDef[%s]' % self.name
 
 class FunctionDef(object):
-  def __init__(self):
+  def __init__(self, name, static, virtual, type, params):
     object.__init__(self)
+    self.name = name
+    self.static = static
+    self.virtual = virtual
+    self.type = type
+    self.params = params
+
+  def __str__(self):
+    return 'FunctionDef[%s %s (%s)]' % (self.type, self.name, self.params)
+
+  def __repr__(self):
+    return 'FunctionDef[%s %s (%s)]' % (self.type, self.name, self.params)
+
 
 class ClassDef(object):
   def __init__(self, name, parent, parent_access):
@@ -28,7 +47,7 @@ class ClassDef(object):
     return 'ClassDef[%s]' % self.name
 
   def __repr__(self):
-    return 'NamespaceDef[%s]' % self.name
+    return 'ClassDef[%s]' % self.name
 
 class NamespaceDef(object):
   def __init__(self, name, begin, end):
@@ -121,6 +140,62 @@ class Parser(Lexer):
   def ParseType(self):
     has_signed_or_unsigned = False
     is_void = False
+    is_const = False
+    is_pointer = False
+    is_ref = False
+    type = []
+
+    # check const, singed and unsigned
+    while True:
+      if self.Test('CONST'):
+        if is_const:
+          raise Exception('Duplicate const.')
+        is_const = True
+        type.append('const')
+        continue
+      if self.Test('SIGNED'):
+        if has_signed_or_unsigned:
+          raise Exception('Duplicate signed or unsigned.')
+        has_signed_or_unsigned = True
+      if self.Test('UNSIGNED'):
+        if has_signed_or_unsigned:
+          raise Exception('Duplicate signed or unsigned.')
+        has_signed_or_unsigned = True
+        type.append('unsigned')
+      break
+    
+    # Skip enum, struct, class and union
+    f = self.Test('ENUM') or \
+        self.Test('STRUCT') or \
+        self.Test('CLASS') or \
+        self.Test('UNION')
+
+    if self.Test('INT') or self.Test('LONG') or self.Test('SHORT') or \
+        self.Test('CHAR') or self.Test('FLOAT') or self.Test('DOUBLE'):
+      value = self.Lookup(0).value
+      type.append(value)
+      # Only support long long. Will not support long int, long short and etc
+      if value == 'long' and self.Test('LONG'):
+        type.append('long')
+    elif self.Test('SYMBOL'):
+      type.append(self.Lookup(0).value)
+    elif self.Test('VOID'):
+      is_void = True
+      type.append('void')
+    else:
+      raise Exception('Parse type error')
+
+    if self.Test('&'):
+      if is_void:
+        raise Exception('Parse type error void &')
+      is_ref = True
+      type.append('&')
+    elif self.Test('*'):
+      is_pointer = True
+      type.append('*')
+      if self.Test('CONST'):
+        type.append('const')
+    return TypeDef(' '.join(type))
 
   def ParseSlot(self):
     if not self.Test('R_SLOT'):
@@ -142,8 +217,45 @@ class Parser(Lexer):
     if self.Lookup(0).type == 'TEMPLATE':
       raise Exception('Do not support template slot')
 
-    type = self.ParseType()
+    slot_type = self.ParseType()
+    if not self.Test('SYMBOL'):
+      raise Exception('Parse slot failed')
+    
+    slot_name = self.Lookup(0).value
+    if not self.Test('('):
+      raise Exception('Parse slot failed: expect \'(\'')
 
+    params = []
+    while True:
+      if self.Test(')'):
+        break
+      param_type = self.ParseType()
+      if self.Test('SYMBOL'):
+        param_name = self.Lookup(0).value
+      params.append((param_type, param_name))
+      
+      if self.Test(')'):
+        break
+      if not self.Test(','):
+        raise Exception('Parse param failed')
+
+    self.Test('CONST')
+
+    if self.Test('='):
+      if self.Lookup(1).value != '0':
+        raise Exception('Parse slot failed: expect \'0\'')
+      if not is_virtual:
+        raise Exception('initializer specified for non-virtual')
+
+    if self.Test('{'):
+      if not self.Until('}'):
+        raise Exception('Parse function failed: EOF')
+    elif self.Test(';'):
+      pass
+    else:
+      raise Exception('Parse slot failed: expect \';\'')
+    return FunctionDef(slot_name, is_static, is_virtual, slot_type, params)
+    
  
   def ParseClass(self):
     class_name = None
@@ -212,6 +324,7 @@ class Parser(Lexer):
         if access != 'PUBLIC':
           raise Exception('Slot must be public')
         class_def.slots.append(slot_def)
+        print slot_def
         continue
 
       self.Until(';')

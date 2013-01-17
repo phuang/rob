@@ -11,6 +11,9 @@ namespace rob {
 struct ClassA {
   R_OBJECT;
   R_SLOT void HelloWorld();
+  R_SLOT void HelloWorldC(int a, void* b);
+  R_SLOT int getValue();
+  R_SLOT const long long* getValue();
   long long a;
   long long b;
   long long c;
