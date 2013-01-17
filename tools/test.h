@@ -14,6 +14,7 @@ struct ClassA {
   R_SLOT void HelloWorldC(int a, void* b);
   R_SLOT int getValue();
   R_SLOT const long long* getValue();
+  R_SLOT rob::ClassA* getClass();
   long long a;
   long long b;
   long long c;

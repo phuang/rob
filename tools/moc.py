@@ -9,23 +9,17 @@ class Moc(Parser):
 
   def ParseScope(self):
     # TODO(penghuang): Verify scope
+    s = []
     if self.Test('SCOPE'):
-      scope = '::'
-    else:
-      scope = ''
+      s.append('')
     
     while True:
-      token = self.Next()
-      if token.type != 'SYMBOL':
-        return None
-      scope += token.value
-
-      token = self.Next()
-      if token.type == '::':
-        scope += '::'
+      if not self.Test('SYMBOL'):
+        raise Exception('Parse scope failed')
+      s.append(self.Lookup(0).value)
+      if self.Test('SCOPE'):
         continue
-      self.Prev()
-      return scope
+      return "::".join(s)
 
   def ParseType(self):
     has_signed_or_unsigned = False
@@ -67,11 +61,12 @@ class Moc(Parser):
       # Only support long long. Will not support long int, long short and etc
       if value == 'long' and self.Test('LONG'):
         type.append('long')
-    elif self.Test('SYMBOL'):
-      type.append(self.Lookup(0).value)
     elif self.Test('VOID'):
       is_void = True
       type.append('void')
+    elif self.Test('SYMBOL'):
+      self.Prev()
+      type.append(self.ParseScope())
     else:
       raise Exception('Parse type error')
 
@@ -175,8 +170,9 @@ class Moc(Parser):
       if self.Test('PUBLIC') or self.Test('PRIVATE') or self.Test('PROTECTED'):
         parent_access = self.Lookup(0).type
       
-      parent_name = self.ParseScope()
-      if not parent_name:
+      try:
+        parent_name = self.ParseScope()
+      except:
         raise Exception("Parse parent class name of class %s error!", class_name)
     
     if not self.Test('{'):
