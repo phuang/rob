@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # http://homepages.e3.net.nz/~djm/cppgrammar.html#declaration-seq
-from moc_lexer import Lexer
+from lexer import Lexer
 
 class Parser(Lexer):
   def __init__(self):
