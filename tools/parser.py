@@ -2,65 +2,8 @@
 # http://homepages.e3.net.nz/~djm/cppgrammar.html#declaration-seq
 import sys
 from moc_lexer import Lexer
-
 from ply import lex
-
-class TypeDef(object):
-  def __init__(self, name):
-    object.__init__(self)
-    self.name = name
-
-  def __str__(self):
-    return 'TypeDef[%s]' % self.name
-
-  def __repr__(self):
-    return 'TypeDef[%s]' % self.name
-
-class FunctionDef(object):
-  def __init__(self, name, static, virtual, type, params):
-    object.__init__(self)
-    self.name = name
-    self.static = static
-    self.virtual = virtual
-    self.type = type
-    self.params = params
-
-  def __str__(self):
-    return 'FunctionDef[%s %s (%s)]' % (self.type, self.name, self.params)
-
-  def __repr__(self):
-    return 'FunctionDef[%s %s (%s)]' % (self.type, self.name, self.params)
-
-
-class ClassDef(object):
-  def __init__(self, name, parent, parent_access):
-    object.__init__(self)
-    self.name = name
-    self.namespace = None
-    self.parent = parent
-    self.parentaccess_ = parent_access
-    self.slots = []
-    self.signals = []
-    self.properties = []
-
-  def __str__(self):
-    return 'ClassDef[%s]' % self.name
-
-  def __repr__(self):
-    return 'ClassDef[%s]' % self.name
-
-class NamespaceDef(object):
-  def __init__(self, name, begin, end):
-    object.__init__(self)
-    self.name = name
-    self.begin = begin
-    self.end = end
-  
-  def __str__(self):
-    return 'NamespaceDef[%s]' % self.name
-
-  def __repr__(self):
-    return 'NamespaceDef[%s]' % self.name
+from define import *
 
 class Parser(Lexer):
   def __init__(self):
@@ -300,7 +243,6 @@ class Parser(Lexer):
           raise Exception('Parse class %s failed: except `;\'' % class_name)
       else:
         raise Exception('Parse class %s failed: EOF', class_name)
-
       
     class_def = ClassDef(class_name, parent_name, parent_access)
       
@@ -324,7 +266,6 @@ class Parser(Lexer):
         if access != 'PUBLIC':
           raise Exception('Slot must be public')
         class_def.slots.append(slot_def)
-        print slot_def
         continue
 
       self.Until(';')
@@ -366,8 +307,14 @@ class Parser(Lexer):
         self.Until(';')
         continue
 
+      class_index = self.index_
       is_class, class_def = self.ParseClass()
       if class_def:
+        nss = []
+        for ns in namespaces:
+          if class_index >= ns.begin and class_index < ns.end:
+            nss.append(ns.name)
+        class_def.namespace = "::".join(nss)
         classes.append(class_def)
       if is_class:
         continue
@@ -381,8 +328,8 @@ class Parser(Lexer):
       p2 = self.index_
       self.index_ = p1 if p1 <= p2 else p2
 
-    print namespaces
-    print classes
+    for c in classes:
+      print c
 
   def ParseFile(self, filename):
     data = open(filename).read()
