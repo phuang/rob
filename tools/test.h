@@ -15,6 +15,9 @@ struct ClassA {
   R_SLOT int getValue();
   R_SLOT const long long* getValue();
   R_SLOT rob::ClassA* getClass();
+
+  R_SIGNAL void valueChanged(const char* name);
+
   long long a;
   long long b;
   long long c;

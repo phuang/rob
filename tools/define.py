@@ -53,7 +53,9 @@ class ClassDef(object):
           (self.get_full_name(), self.parentaccess_.lower(), self.parent)
 
     for slot in self.slots:
-      print >> out, "  %s" % slot
+      print >> out, "  slot %s" % slot
+    for signal in self.signals:
+      print >> out, "  signal %s" % signal
     print >> out, "};"
     return out.getvalue()
 
