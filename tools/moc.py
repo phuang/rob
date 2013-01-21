@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 import sys
 from parser import Parser
 from define import TypeDef, FunctionDef, ClassDef, NamespaceDef
@@ -12,7 +12,7 @@ class Moc(Parser):
     s = []
     if self.Test('SCOPE'):
       s.append('')
-    
+
     while True:
       if not self.Test('SYMBOL'):
         raise Exception('Parse scope failed')
@@ -47,12 +47,10 @@ class Moc(Parser):
         has_signed_or_unsigned = True
         type.append('unsigned')
       break
-    
+
     # Skip enum, struct, class and union
-    f = self.Test('ENUM') or \
-        self.Test('STRUCT') or \
-        self.Test('CLASS') or \
-        self.Test('UNION')
+    f = self.Test('ENUM') or self.Test('STRUCT') or \
+        self.Test('CLASS') or self.Test('UNION')
 
     if self.Test('INT') or self.Test('LONG') or self.Test('SHORT') or \
         self.Test('CHAR') or self.Test('FLOAT') or self.Test('DOUBLE'):
@@ -82,10 +80,7 @@ class Moc(Parser):
         type.append('const')
     return TypeDef(' '.join(type))
 
-  def ParseSlot(self):
-    if not self.Test('R_SLOT'):
-      return None
-
+  def ParseFunction(self):
     is_virtual = False
     is_static = False
     while True:
@@ -105,7 +100,7 @@ class Moc(Parser):
     slot_type = self.ParseType()
     if not self.Test('SYMBOL'):
       raise Exception('Parse slot failed')
-    
+
     slot_name = self.Lookup(0).value
     if not self.Test('('):
       raise Exception('Parse slot failed: expect \'(\'')
@@ -118,7 +113,7 @@ class Moc(Parser):
       if self.Test('SYMBOL'):
         param_name = self.Lookup(0).value
       params.append((param_type, param_name))
-      
+
       if self.Test(')'):
         break
       if not self.Test(','):
@@ -140,8 +135,17 @@ class Moc(Parser):
     else:
       raise Exception('Parse slot failed: expect \';\'')
     return FunctionDef(slot_name, is_static, is_virtual, slot_type, params)
-    
- 
+
+  def ParseSlot(self):
+    if not self.Test('R_SLOT'):
+      return None
+    return self.ParseFunction()
+
+  def ParseSignal(self):
+    if not self.Test('R_SIGNAL'):
+      return None
+    return self.ParseFunction()
+
   def ParseClass(self):
     class_name = None
     parent_name = None
@@ -169,12 +173,12 @@ class Moc(Parser):
     if self.Test(':'): #
       if self.Test('PUBLIC') or self.Test('PRIVATE') or self.Test('PROTECTED'):
         parent_access = self.Lookup(0).type
-      
+
       try:
         parent_name = self.ParseScope()
       except:
         raise Exception("Parse parent class name of class %s error!", class_name)
-    
+
     if not self.Test('{'):
       raise Exception('Parse class error: expect `{\'')
 
@@ -186,9 +190,9 @@ class Moc(Parser):
           raise Exception('Parse class %s failed: except `;\'' % class_name)
       else:
         raise Exception('Parse class %s failed: EOF', class_name)
-      
+
     class_def = ClassDef(class_name, parent_name, parent_access)
-      
+
     while self.HasNext():
       # End of class
       if self.Test('}'):
@@ -202,7 +206,7 @@ class Moc(Parser):
         if not self.Test(':'):
           raise Exception('Parse class error: expect `:\'')
         continue
-      
+
       # Parse slot
       slot_def = self.ParseSlot()
       if slot_def:
@@ -211,7 +215,16 @@ class Moc(Parser):
         class_def.slots.append(slot_def)
         continue
 
+      # Parse ssignal
+      signal_def = self.ParseSignal()
+      if signal_def:
+        if access != 'PUBLIC':
+          raise Exception('Signal must be public')
+        class_def.signals.append(signal_def)
+        continue
+
       self.Until(';')
+
     raise Exception('Parse class \'%s\' error EOF' % class_name)
 
   def ParseNamespace(self):
@@ -261,7 +274,7 @@ class Moc(Parser):
         classes.append(class_def)
       if is_class:
         continue
-      
+
       # Move to ; or }
       cur = self.index_
       self.Until(';')
