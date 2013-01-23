@@ -76,6 +76,7 @@ class Lexer(object):
       'R_SIGNAL',
       'R_SLOT',
       'R_OBJECT',
+      'R_PROPERTY',
 
 
     # Data type
@@ -135,6 +136,7 @@ class Lexer(object):
     'R_SIGNAL' : 'R_SIGNAL',
     'R_SLOT' : 'R_SLOT',
     'R_OBJECT' : 'R_OBJECT',
+    'R_PROPERTY' : 'R_PROPERTY',
     'bool' : 'BOOL',
     'int' : 'INT',
     'long' : 'LONG',

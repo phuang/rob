@@ -27,6 +27,21 @@ class FunctionDef(object):
   def __repr__(self):
     return 'FunctionDef[%s]' % self.__str__()
 
+class PropertyDef(object):
+  def __init__(self, name, type, read, write):
+    object.__init__(self)
+    self.name = name
+    self.type = type
+    self.read = read
+    self.write = write
+
+  def __str__(self):
+    return '%s %s' % (self.type, self.name)
+
+  def __repr__(self):
+    return 'PropertyDef[%s]' % self.__str__()
+
+
 
 class ClassDef(object):
   def __init__(self, name, parent, parent_access):
@@ -53,9 +68,11 @@ class ClassDef(object):
           (self.get_full_name(), self.parentaccess_.lower(), self.parent)
 
     for slot in self.slots:
-      print >> out, "  slot %s" % slot
+      print >> out, "  slot %s;" % slot
     for signal in self.signals:
-      print >> out, "  signal %s" % signal
+      print >> out, "  signal %s;" % signal
+    for prop in self.properties:
+      print >> out, "  property %s %s { %s, %s};" % (prop.type, prop.name, prop.read, prop.write)
     print >> out, "};"
     return out.getvalue()
 
@@ -68,7 +85,7 @@ class NamespaceDef(object):
     self.name = name
     self.begin = begin
     self.end = end
-  
+
   def __str__(self):
     return self.name
 

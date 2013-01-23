@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 import sys
 from parser import Parser
-from define import TypeDef, FunctionDef, ClassDef, NamespaceDef
+from define import *
+
 
 class Moc(Parser):
   def __init__(self):
@@ -146,6 +147,33 @@ class Moc(Parser):
       return None
     return self.ParseFunction()
 
+  def ParseProperty(self):
+    if not self.Test('R_PROPERTY'):
+      return None
+    if not self.Test('('):
+      raise Exception('Parse property failed: except `(\'')
+
+    prop_type = self.ParseType()
+    if not self.Test('SYMBOL'):
+      raise Exception('Parse property failed: expect property name.')
+    prop_name = self.Lookup(0).value
+
+    if not self.Test('SYMBOL', 'READ'):
+      raise Exception('Parse property failed: expect READ')
+
+    if not self.Test('SYMBOL'):
+      raise Exception('Parse property failed: expect read function.')
+    prop_read = self.Lookup(0).value
+
+    prop_write = None
+    if self.Test('SYMBOL', 'WRITE'):
+      if not self.Test('SYMBOL'):
+        raise Exception('Parse property failed: expect write function.')
+      prop_write = self.Lookup(0).value
+    if not self.Test(')'):
+      raise Exception('Parse property failed: except `)\'')
+    return PropertyDef(prop_name, prop_type, prop_read, prop_write)
+
   def ParseClass(self):
     class_name = None
     parent_name = None
@@ -222,6 +250,10 @@ class Moc(Parser):
           raise Exception('Signal must be public')
         class_def.signals.append(signal_def)
         continue
+
+      prop_def = self.ParseProperty()
+      if prop_def:
+        class_def.properties.append(prop_def)
 
       self.Until(';')
 
@@ -303,6 +335,7 @@ class Moc(Parser):
 def Main(args):
   moc = Moc()
   moc.ParseFile(args[0])
+
 
 if __name__ == '__main__':
   Main(sys.argv[1:])

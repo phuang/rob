@@ -9,10 +9,12 @@ class Parser(Lexer):
   def HasNext(self):
     return self.index_ < len(self.tokens_)
 
-  def Test(self, token):
+  def Test(self, token, value=None):
     if self.index_ >= len(self.tokens_):
       return False
     if self.tokens_[self.index_].type != token:
+      return False
+    if value != None and self.tokens_[self.index_].value != value:
       return False
     self.index_ += 1
     return True
