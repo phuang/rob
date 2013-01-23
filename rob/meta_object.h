@@ -30,6 +30,12 @@ class ROB_EXPORT MetaMethod {
 
 class ROB_EXPORT MetaObject {
  public:
+  enum Call {
+    INVOKE_META_METHOD,
+    READ_PROPERTY,
+    WRITE_PROPERTY,
+    INDEX_OF_METHOD,
+  };
   MetaObject();
   virtual ~MetaObject();
 

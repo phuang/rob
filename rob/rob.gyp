@@ -31,6 +31,7 @@
         'rob.cc',
         'object.cc',
         'object.h',
+        'object_defs.h',
         'thread.cc',
         'thread.h',
         'variant.cc',

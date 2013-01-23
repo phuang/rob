@@ -6,6 +6,8 @@
 
 #include <string>
 
+#include "rob/meta_object.h"
+#include "rob/object_defs.h"
 #include "rob/rob_export.h"
 #include "rob/variant.h"
 
@@ -14,6 +16,7 @@ namespace rob {
 class Variant;
 
 class ROB_EXPORT Object {
+  R_OBJECT
  public:
   Object();
   virtual ~Object();

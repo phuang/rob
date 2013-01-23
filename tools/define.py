@@ -21,8 +21,9 @@ class FunctionDef(object):
     self.params = params
 
   def __str__(self):
+    params = [(str(t) + ' ' + n if n else str(t)) for t, n in self.params]
     return '%s %s (%s)' % (self.type, self.name,
-        self.params if self.params else 'void')
+        ', '.join(params) if params else 'void')
 
   def __repr__(self):
     return 'FunctionDef[%s]' % self.__str__()
