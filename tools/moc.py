@@ -277,7 +277,7 @@ class Moc(Parser):
       return None
     return NamespaceDef(name, begin, self.index_)
 
-  def Parse(self, namespace=""):
+  def Parse(self):
     namespaces = []
     classes = []
     while self.HasNext():

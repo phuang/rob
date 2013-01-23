@@ -58,4 +58,3 @@ class Parser(Lexer):
           brace_count <= 0 and brack_count <= 0 and paren_count <= 0:
         return True
     return False
-
