@@ -8,7 +8,7 @@
 
 namespace rob {
 
-struct ClassA {
+struct ClassA : public Object {
   R_OBJECT;
   R_SLOT void HelloWorld();
   R_SLOT void HelloWorldC(int a, void* b);
@@ -23,8 +23,7 @@ struct ClassA {
   long long c;
 };
 
-class Counter : public QObject
-{
+class Counter : public Object {
   R_OBJECT
  public:
   enum CounterFlags {
@@ -55,8 +54,7 @@ class Counter : public QObject
   CounterFlags m_flags;
 };
 
-class CounterEx : public Counter
-{
+class CounterEx : public Counter {
   R_OBJECT
  public:
   virtual void setValue(int newValue);
@@ -67,5 +65,4 @@ class AA: public QObject {
 };
 
 const char* name = "\"Hello World\"";
-
 }

@@ -277,7 +277,6 @@ class Lexer(object):
     self.lexobj = lex.lex(object=self, lextab=None, optimize=0)
 
 
-
 #
 # FilesToTokens
 #
@@ -306,6 +305,7 @@ def TokensFromText(text):
     if t is None: break
     outlist.append(t.value)
   return outlist
+
 
 #
 # TextToTokens
