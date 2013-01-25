@@ -317,8 +317,9 @@ class Moc(Parser):
       p2 = self.index_
       self.index_ = p1 if p1 <= p2 else p2
 
+    generator = Generator()
     for c in classes:
-      print Generator(c).Generate()
+      print generator.Generate(c)
 
   def ParseFile(self, filename):
     data = open(filename).read()

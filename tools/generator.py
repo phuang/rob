@@ -1,25 +1,32 @@
 class Generator(object):
-  def __init__(self, class_def):
+  def __init__(self):
     object.__init__(self)
-    self.class_def_ = class_def
-    self.out_ = []
-    self.meta_string_array_ = []
-    self.meta_string_map_ = {}
-    self.meta_string_last_ = 0
 
-  def Generate(self):
-    self.GenerateMetaData(self.out_)
-    return '\n'.join(self.out_)
+  def Generate(self, clazz):
+    out = []
+    self.GenerateMetaData(clazz, out)
+    return '\n'.join(out)
 
-  def GenerateMetaData(self, out):
-    clazz = self.class_def_
+  def GenerateMetaData(self, clazz, out):
     METHOD_SIZE = 4
     n_method = len(clazz.slots) + len(clazz.signals)
     n_property = len(clazz.properties)
     offset = 0
+
+    meta_string_array = []
+    meta_string_map = {}
+    meta_string_offset = [0]
+
+    def AddString(s):
+      if s not in meta_string_map:
+        meta_string_array.append(s)
+        meta_string_map[s] = meta_string_offset[0]
+        meta_string_offset[0] += len(s) + 1
+      return meta_string_map[s]
+
     out.append('static const unsigned int meta_data_%s[] = {' % clazz.name)
     out.append('  // content:')
-    out.append('  %3d,       // classname' % self.AddString(clazz.name))
+    out.append('  %3d,       // classname' % AddString(clazz.name))
     out.append('  %3d, %3d,  // methods' % (n_method,
         offset if n_method else 0))
     offset += n_method * METHOD_SIZE
@@ -30,11 +37,12 @@ class Generator(object):
 
     def GenerateFunc(f):
       out.append('  %3d, %3d, %3d, %3d,' % (
-        self.AddString(s.name),
-        self.AddString(','.join([t.name for t, n in s.params])),
-        self.AddString(','.join([n for t, n in s.params])),
-        self.AddString(s.type.name if s.type.name != 'void' else ''),
+        AddString(s.name),
+        AddString(','.join([t.name for t, n in s.params])),
+        AddString(','.join([n for t, n in s.params])),
+        AddString(s.type.name if s.type.name != 'void' else ''),
       ))
+
     if clazz.signals:
       out.append('  // signals: name, signature, parameters, type')
       for s in clazz.signals:
@@ -51,8 +59,8 @@ class Generator(object):
       out.append('  // property: name, type')
       for p in clazz.properties:
         out.append('  %3d, %3d,' % (
-          self.AddString(p.name),
-          self.AddString(p.type.name),
+          AddString(p.name),
+          AddString(p.type.name),
         ))
       out.append('')
     out.append('  %3d,  //eod' % 0)
@@ -61,7 +69,7 @@ class Generator(object):
     out.append('')
 
     out.append('static const char meta_stringdata_%s[] = {' % clazz.name)
-    for s in self.meta_string_array_:
+    for s in meta_string_array:
       out.append('  "%s\\0"' % s)
     out.append('};')
     out.append('')
@@ -73,10 +81,4 @@ class Generator(object):
     for slot in self.class_def.slots:
       self.AddString()
 
-  def AddString(self, s):
-    if s not in self.meta_string_map_:
-      self.meta_string_array_.append(s)
-      self.meta_string_map_[s] = self.meta_string_last_
-      self.meta_string_last_ += len(s) + 1
-    return self.meta_string_map_[s]
 
