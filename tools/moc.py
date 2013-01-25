@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 import sys
-from parser import Parser
-from define import *
 
+from define import *
+from generator import Generator
+from parser import Parser
 
 class Moc(Parser):
   def __init__(self):
@@ -317,7 +318,7 @@ class Moc(Parser):
       self.index_ = p1 if p1 <= p2 else p2
 
     for c in classes:
-      print c
+      print Generator(c).Generate()
 
   def ParseFile(self, filename):
     data = open(filename).read()
