@@ -91,50 +91,89 @@ class Generator(object):
     out.append('}')
     out.append('')
 
-    # virtual int Class::meta_call(MetaObject::Call c, int id, void **a)
-    out.append('int %s::meta_call(MetaObject::Call c, int id, void **a) {' % clazz.name)
-    out.append('  id = %s::meta_call((c, id, a);' % clazz.parent)
-    out.append('  if (id < 0) return id;')
-    out.append('  switch(c) {')
-    out.append('    case MetaObject::INVOKE_META_METHOD: {')
-    out.append('      switch(id) {')
+    # virtual int Class::meta_call(MetaObject::Call _c, int _id, void **_a)
+    out.append('int %s::meta_call(MetaObject::Call _c, int _id, void **_a) {' % clazz.name)
+    if clazz.name != 'Object':
+      out.append('  _id = %s::meta_call(_c, _id, _a);' % clazz.parent)
+      out.append('  if (_id < 0) return _id;')
 
+    out.append('  switch(_c) {')
+
+    # invoke meta method
+    out.append('    case MetaObject::INVOKE_META_METHOD: {')
+    out.append('      switch(_id) {')
     def GenerateFunctionCall(func):
-      args = ['              *reinterpret_cast<%s*>(a[%d])' % (t, i + 1)
+      args = ['              *reinterpret_cast<%s*>(_a[%d])' % (t, i + 1)
           for i, (t, n) in enumerate(func.params)]
       prefix = ''
       if func.type != 'void':
-        out.append('          %s* r = reinterpret_cast<%s*>(a[0]);' % (func.type, func.type))
-        prefix = '*r = '
+        out.append('          %s* _r = reinterpret_cast<%s*>(_a[0]);' % (func.type, func.type))
+        prefix = '*_r = '
       if args:
         out.append('          %s%s::%s(' % (prefix, clazz.name, func.name))
         out.append('%s);' % ',\n'.join(args))
       else:
-        out.append('          *r = %s::%s();' % (clazz.name, func.name))
+        out.append('          *_r = %s::%s();' % (clazz.name, func.name))
 
     i = 0
     for f in clazz.signals:
       out.append('        case %d: {' % i)
       GenerateFunctionCall(f)
+      out.append('          break;')
       out.append('        }')
       i += 1
     for f in clazz.slots:
       out.append('        case %d: {' % i)
       GenerateFunctionCall(f)
+      out.append('          break;')
       out.append('        }')
       i += 1
     out.append('      }');
-    out.append('      id -= %d;' % i);
+    out.append('      _id -= %d;' % i);
     out.append('      break;');
     out.append('    }');
+    out.append('');
+
+    # read property
+    i = 0
     out.append('    case MetaObject::READ_PROPERTY: {')
-    out.append('      break;');
-    out.append('    }');
+    out.append('      switch(_id) {')
+    for p in clazz.properties:
+      out.append('        case %d: {' % i)
+      out.append('          %s* _v = reinterpret_cast<%s*>(_a[0]);' % (p.type, p.type))
+      out.append('          *_v = %s::%s();' % (clazz.name, p.read))
+      out.append('          break;')
+      out.append('        }')
+      i += 1
+    out.append('      }')
+    out.append('      _id -= %d;' % i)
+    out.append('      break;')
+    out.append('    }')
+    out.append('');
+
+    # write property
+    i = 0
     out.append('    case MetaObject::WRITE_PROPERTY: {')
-    out.append('      break;');
-    out.append('    }');
+    out.append('      switch(_id) {')
+    for p in clazz.properties:
+      if not p.write:
+        i += 1
+        continue
+      out.append('        case %d: {' % i)
+      out.append('          const %s* _v = reinterpret_cast<%s*>(_a[1]);' % (p.type, p.type))
+      out.append('          *%s::%s(*_v);' % (clazz.name, p.read))
+      out.append('          break;')
+      out.append('        }')
+      i += 1
+    out.append('      }')
+    out.append('      _id -= %d;' % i)
+    out.append('      break;')
+    out.append('    }')
+    out.append('');
+
+    # switch end
     out.append('  }');
-    out.append('  return id;')
+    out.append('  return _id;')
     out.append('}')
     out.append('')
 
