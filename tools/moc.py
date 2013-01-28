@@ -80,7 +80,7 @@ class Moc(Parser):
       type.append('*')
       if self.Test('CONST'):
         type.append('const')
-    return TypeDef(' '.join(type))
+    return ' '.join(type)
 
   def ParseFunction(self):
     is_virtual = False

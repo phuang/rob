@@ -32,9 +32,9 @@ class Generator(object):
     def GenerateFunc(f):
       out.append('  %3d, %3d, %3d, %3d,' % (
         AddString(s.name),
-        AddString(','.join([t.name for t, n in s.params])),
+        AddString(','.join([t for t, n in s.params])),
         AddString(','.join([n for t, n in s.params])),
-        AddString(s.type.name if s.type.name != 'void' else ''),
+        AddString(s.type if s.type != 'void' else ''),
       ))
 
     if clazz.signals:
@@ -52,7 +52,7 @@ class Generator(object):
       for p in clazz.properties:
         out.append('  %3d, %3d,' % (
           AddString(p.name),
-          AddString(p.type.name),
+          AddString(p.type),
         ))
     out.append('  %3d,  //eod' % 0)
 
@@ -74,10 +74,15 @@ class Generator(object):
     out.append('  meta_data_%s' % clazz.name)
     out.append('};')
     out.append('')
+
+  def GenerateMetaFunc(self, clazz, out):
+    # virtual const MetaObject* Class::meta_object() const
     out.append('const MetaObject* %s::meta_object() const {' % clazz.name)
     out.append('  return &static_meta_object;')
     out.append('}')
     out.append('')
+
+    # virtual void* Class::meta_cast(const char* class_name)
     out.append('void* %s::meta_cast(const char* class_name) {' % clazz.name)
     out.append('  if (!class_name) return 0;')
     out.append('  if (!strcmp(class_name, meta_string_data_%s))' % clazz.name)
@@ -85,11 +90,41 @@ class Generator(object):
     out.append('  return %s::meta_cast(class_name);' % clazz.parent)
     out.append('}')
     out.append('')
+
+    # virtual int Class::meta_call(MetaObject::Call c, int id, void **a)
     out.append('int %s::meta_call(MetaObject::Call c, int id, void **a) {' % clazz.name)
     out.append('  id = %s::meta_call((c, id, a);' % clazz.parent)
     out.append('  if (id < 0) return id;')
     out.append('  switch(c) {')
     out.append('    case MetaObject::INVOKE_META_METHOD: {')
+    out.append('      switch(id) {')
+
+    def GenerateFunctionCall(func):
+      args = ['              *reinterpret_cast<%s*>(a[%d])' % (t, i + 1)
+          for i, (t, n) in enumerate(func.params)]
+      prefix = ''
+      if func.type != 'void':
+        out.append('          %s* r = reinterpret_cast<%s*>(a[0]);' % (func.type, func.type))
+        prefix = '*r = '
+      if args:
+        out.append('          %s%s::%s(' % (prefix, clazz.name, func.name))
+        out.append('%s);' % ',\n'.join(args))
+      else:
+        out.append('          *r = %s::%s();' % (clazz.name, func.name))
+
+    i = 0
+    for f in clazz.signals:
+      out.append('        case %d: {' % i)
+      GenerateFunctionCall(f)
+      out.append('        }')
+      i += 1
+    for f in clazz.slots:
+      out.append('        case %d: {' % i)
+      GenerateFunctionCall(f)
+      out.append('        }')
+      i += 1
+    out.append('      }');
+    out.append('      id -= %d;' % i);
     out.append('      break;');
     out.append('    }');
     out.append('    case MetaObject::READ_PROPERTY: {')
@@ -103,13 +138,11 @@ class Generator(object):
     out.append('}')
     out.append('')
 
-  def GenerateMetaFunc(self, clazz, out):
-    pass
-
   def Generate(self, clazz):
     out = []
     self.GenerateMetaData(clazz, out)
     self.GenerateMetaObject(clazz, out)
+    self.GenerateMetaFunc(clazz, out)
     return '\n'.join(out)
 
 
