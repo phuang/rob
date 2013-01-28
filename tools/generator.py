@@ -21,16 +21,16 @@ class Generator(object):
 
     out.append('static const unsigned int meta_data_%s[] = {' % clazz.name)
     out.append('  // content:')
-    out.append('  %3d,       // classname' % AddString(clazz.name))
-    out.append('  %3d, %3d,  // methods' % (n_method,
+    out.append('  %d,       // classname' % AddString(clazz.name))
+    out.append('  %d, %d,  // methods' % (n_method,
         offset if n_method else 0))
     offset += n_method * METHOD_SIZE
-    out.append('  %3d, %3d,  // properties' % (n_property,
+    out.append('  %d, %d,  // properties' % (n_property,
         offset if n_property else 0))
-    out.append('  %3d,       // signal count' % len(clazz.signals))
+    out.append('  %d,       // signal count' % len(clazz.signals))
 
     def GenerateFunc(f):
-      out.append('  %3d, %3d, %3d, %3d,' % (
+      out.append('  %d, %d, %d, %d,' % (
         AddString(s.name),
         AddString(','.join([t for t, n in s.params])),
         AddString(','.join([n for t, n in s.params])),
@@ -50,11 +50,11 @@ class Generator(object):
     if clazz.properties:
       out.append('  // property: name, type')
       for p in clazz.properties:
-        out.append('  %3d, %3d,' % (
+        out.append('  %d, %d,' % (
           AddString(p.name),
           AddString(p.type),
         ))
-    out.append('  %3d,  //eod' % 0)
+    out.append('  %d,  //eod' % 0)
 
     out.append('};')
     out.append('')
@@ -115,58 +115,45 @@ class Generator(object):
       else:
         out.append('          *_r = %s::%s();' % (clazz.name, func.name))
 
-    i = 0
-    for f in clazz.signals:
+    for i, f in enumerate(clazz.signals + clazz.slots):
       out.append('        case %d: {' % i)
       GenerateFunctionCall(f)
       out.append('          break;')
       out.append('        }')
-      i += 1
-    for f in clazz.slots:
-      out.append('        case %d: {' % i)
-      GenerateFunctionCall(f)
-      out.append('          break;')
-      out.append('        }')
-      i += 1
     out.append('      }');
-    out.append('      _id -= %d;' % i);
+    out.append('      _id -= %d;' % (i + 1));
     out.append('      break;');
     out.append('    }');
     out.append('');
 
     # read property
-    i = 0
     out.append('    case MetaObject::READ_PROPERTY: {')
     out.append('      switch(_id) {')
-    for p in clazz.properties:
+    for i, p in enumerate(clazz.properties):
       out.append('        case %d: {' % i)
       out.append('          %s* _v = reinterpret_cast<%s*>(_a[0]);' % (p.type, p.type))
       out.append('          *_v = %s::%s();' % (clazz.name, p.read))
       out.append('          break;')
       out.append('        }')
-      i += 1
     out.append('      }')
-    out.append('      _id -= %d;' % i)
+    out.append('      _id -= %d;' % (i + 1))
     out.append('      break;')
     out.append('    }')
     out.append('');
 
     # write property
-    i = 0
     out.append('    case MetaObject::WRITE_PROPERTY: {')
     out.append('      switch(_id) {')
-    for p in clazz.properties:
+    for i, p in enumerate(clazz.properties):
       if not p.write:
-        i += 1
         continue
       out.append('        case %d: {' % i)
       out.append('          const %s* _v = reinterpret_cast<%s*>(_a[1]);' % (p.type, p.type))
       out.append('          *%s::%s(*_v);' % (clazz.name, p.read))
       out.append('          break;')
       out.append('        }')
-      i += 1
     out.append('      }')
-    out.append('      _id -= %d;' % i)
+    out.append('      _id -= %d;' % (i + 1))
     out.append('      break;')
     out.append('    }')
     out.append('');
@@ -183,6 +170,3 @@ class Generator(object):
     self.GenerateMetaObject(clazz, out)
     self.GenerateMetaFunc(clazz, out)
     return '\n'.join(out)
-
-
-
