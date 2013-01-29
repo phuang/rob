@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import os.path as path
 import sys
 
 from define import *
@@ -318,12 +319,12 @@ class Moc(Parser):
       self.index_ = p1 if p1 <= p2 else p2
 
     generator = Generator()
-    for c in classes:
-      print generator.Generate(c)
+    print generator.Generate(self.filename_, classes)
 
   def ParseFile(self, filename):
     data = open(filename).read()
     self.SetData(filename, data)
+    self.filename_ = path.basename(filename)
     self.tokens_ = []
     self.index_ = 0
     while True:

@@ -1,3 +1,5 @@
+import time
+
 class Generator(object):
   def __init__(self):
     object.__init__(self)
@@ -69,7 +71,10 @@ class Generator(object):
 
   def GenerateMetaObject(self, clazz, out):
     out.append('const MetaObject %s::static_meta_object = {' % clazz.name)
-    out.append('  &%s::static_meta_object,' % clazz.parent)
+    if clazz.parent:
+      out.append('  &%s::static_meta_object,' % clazz.parent)
+    else:
+      out.append('  NULL,')
     out.append('  meta_string_data_%s,' % clazz.name)
     out.append('  meta_data_%s' % clazz.name)
     out.append('};')
@@ -87,13 +92,16 @@ class Generator(object):
     out.append('  if (!class_name) return 0;')
     out.append('  if (!strcmp(class_name, meta_string_data_%s))' % clazz.name)
     out.append('    return static_cast<void*>(const_cast<%s*>(this));' % clazz.name)
-    out.append('  return %s::meta_cast(class_name);' % clazz.parent)
+    if clazz.parent:
+      out.append('  return %s::meta_cast(class_name);' % clazz.parent)
+    else:
+      out.append('  return NULL;')
     out.append('}')
     out.append('')
 
     # virtual int Class::meta_call(MetaObject::Call _c, int _id, void **_a)
     out.append('int %s::meta_call(MetaObject::Call _c, int _id, void **_a) {' % clazz.name)
-    if clazz.name != 'Object':
+    if clazz.parent:
       out.append('  _id = %s::meta_call(_c, _id, _a);' % clazz.parent)
       out.append('  if (_id < 0) return _id;')
 
@@ -164,9 +172,26 @@ class Generator(object):
     out.append('}')
     out.append('')
 
-  def Generate(self, clazz):
-    out = []
+  def GenerateClass(self, clazz, out):
     self.GenerateMetaData(clazz, out)
     self.GenerateMetaObject(clazz, out)
     self.GenerateMetaFunc(clazz, out)
+
+  def GenerateHeader(self, filename, out):
+    out.append('/* Meta object code from reading C++ file \'%s\'' % filename)
+    out.append(' * Created: %s' % time.asctime())
+    out.append(' *      by: Chrome Meta Object Compiler version %s' % '0.0.1')
+    out.append(' *  WARNING! All changes made in this file will be lost!')
+    out.append(' */')
+    out.append('#include <%s>' % filename)
+    out.append('')
+
+  def Generate(self, filename, classes):
+    out = []
+
+    self.GenerateHeader(filename, out)
+
+    for clazz in classes:
+      self.GenerateClass(clazz, out)
+
     return '\n'.join(out)
