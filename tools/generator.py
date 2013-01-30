@@ -183,7 +183,7 @@ class Generator(object):
     out.append(' *      by: Chrome Meta Object Compiler version %s' % '0.0.1')
     out.append(' *  WARNING! All changes made in this file will be lost!')
     out.append(' */')
-    out.append('#include <%s>' % filename)
+    out.append('#include "%s"' % filename)
     out.append('')
 
   def Generate(self, filename, classes):
