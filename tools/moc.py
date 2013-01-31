@@ -4,6 +4,7 @@ import sys
 
 from define import *
 from generator import Generator
+from option import ParseOptions
 from parser import Parser
 
 class Moc(Parser):
@@ -342,8 +343,11 @@ class Moc(Parser):
 
 
 def Main(args):
+  filenames = ParseOptions(args)
+
   moc = Moc()
-  moc.ParseFile(args[0])
+  for f in filenames:
+    moc.ParseFile(f)
 
 
 if __name__ == '__main__':
