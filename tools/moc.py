@@ -191,6 +191,9 @@ class Moc(Parser):
     else:
       return False, None
 
+    # ignore ROB_EXPORT macro
+    self.Test('SYMBOL', 'ROB_EXPORT')
+
     token = self.Next()
     if token.type != 'SYMBOL':
       raise Exception('Parse class error: expect class name')

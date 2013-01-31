@@ -16,7 +16,7 @@ namespace rob {
 class Variant;
 
 class ROB_EXPORT Object {
-  R_OBJECT
+  R_OBJECT;
  public:
   Object();
   virtual ~Object();
