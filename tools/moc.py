@@ -292,6 +292,12 @@ class Moc(Parser):
       if self.Test('}'): continue
       if self.Test('INCLUDE'): continue
       if self.Test('DEFINE'): continue
+      if self.Test('IF'): continue
+      if self.Test('IFDEF'): continue
+      if self.Test('IFNDEF'): continue
+      if self.Test('ELSE'): continue
+      if self.Test('ELIF'): continue
+      if self.Test('ENDIF'): continue
 
       if self.Test('USING'):
         self.Until(';')

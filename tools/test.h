@@ -4,8 +4,8 @@
 namespace rob {
 
 struct ClassA {
-  R_OBJECT
-  R_PROPERTY(char* name READ name WRITE set_name)
+  R_OBJECT;
+  R_PROPERTY(char* name READ name WRITE set_name);
   R_PROPERTY(int value READ getValue WRITE setValue);
 
   R_SLOT void HelloWorld();

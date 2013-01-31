@@ -60,6 +60,11 @@ class Lexer(object):
       'INCLUDE',
       'DEFINE',
       'IF',
+      'IFDEF',
+      'IFNDEF',
+      'ELIF',
+      'ELSE',
+      'ENDIF',
       'OPERATOR',
       'DYNAMIC_CAST',
       'STATIC_CAST',
@@ -90,7 +95,7 @@ class Lexer(object):
       'VOID',
       'UNSIGNED',
       'SIGNED',
-    
+
     # Value
       'V_FLOAT',
       'V_OCT',
@@ -194,19 +199,43 @@ class Lexer(object):
     r'\#[ \t]*include .*\n'
     self.AddLines(t.value.count('\n'))
     return t
-  
+
   # Return a "preprocessor" define block
   def t_DEFINE(self, t):
     r'\#[ \t]*define ([^\\\n]*\n|([^\\\n]*(\\\n))*[^\\\n]*\n)'
     self.AddLines(t.value.count('\n'))
     return t
-  
-  # Return a "preprocessor" if block
+
   def t_IF(self, t):
-    r'\#[ \t]*if (.*?(\n))*[ \t]*\#[ \t]*endif[ \t]*'
+    r'\#[ \t]*if .*\n'
     self.AddLines(t.value.count('\n'))
     return t
-  
+
+  def t_IFDEF(self, t):
+    r'\#[ \t]*ifdef .*\n'
+    self.AddLines(t.value.count('\n'))
+    return t
+
+  def t_IFNDEF(self, t):
+    r'\#[ \t]*ifndef .*\n'
+    self.AddLines(t.value.count('\n'))
+    return t
+
+  def t_ELIF(self, t):
+    r'\#[ \t]*elif .*\n'
+    self.AddLines(t.value.count('\n'))
+    return t
+
+  def t_ELSE(self, t):
+    r'\#[ \t]*else'
+    self.AddLines(t.value.count('\n'))
+    return t
+
+  def t_ENDIF(self, t):
+    r'\#[ \t]*endif'
+    self.AddLines(t.value.count('\n'))
+    return t
+
   def t_SCOPE(self, t):
     r'::'
     return t
@@ -330,7 +359,7 @@ def Main(args):
     tokens = FilesToTokens(filenames, True)
     for tok in [tok for tok in tokens ]:
       print tok
-  
+
   except lex.LexError as le:
     sys.stderr.write('%s\n' % str(le))
   return -1
