@@ -11,7 +11,8 @@ if _path not in sys.path:
   sys.path.append(_path)
 
 
-cflags = '-g -O0'
+cflags = '-g -O0 -pthread'
+ldflags = '-pthread'
 topdir = '..'
 
 def CreateWriter(p):
@@ -41,13 +42,13 @@ def GenerateBuild():
   out.newline()
   out.subninja('obj/libgtest/build.ninja')
   out.subninja('obj/librob/build.ninja')
-  # out.subninja('obj/rob_unittest/build.ninja')
+  out.subninja('obj/rob_unittest/build.ninja')
 
   out.newline()
   all = [
     'obj/libgtest/libgtest.a',
     'obj/librob/librob.a',
-    # 'obj/rob_unittest/rob_unittest'
+    'obj/rob_unittest/rob_unittest'
  ]
   out.build('all', 'phony', all)
 
@@ -82,8 +83,34 @@ class Library(Target):
       self.writer_.build(obj, 'cxx', src)
       objs.append(obj)
  
-    name = self.get_obj_path(name) + '.a'
-    self.writer_.build(name, 'alink_thin', objs)
+    output = self.get_obj_path(name) + '.a'
+    self.writer_.build(output, 'alink_thin', objs)
+    self.writer_.build(name, 'phony', output)
+
+class Executable(Target):
+  def __init__(self, name, sources, includes, deps):
+    Target.__init__(self, name)
+    
+    includes = ['-I%s' % path.join(topdir, i) for i in includes]
+    self.writer_.variable('includes', ' '.join(includes))
+    self.writer_.variable('cflags', cflags)
+    self.writer_.variable('ldflags', ldflags)
+
+    self.writer_.newline()
+
+    objs = []
+    for src in sources:
+      fname, fext = src.rsplit('.', 1)
+      obj = path.join('obj', name, fname + '.o')
+      src = path.join(topdir, src)
+      self.writer_.build(obj, 'cxx', src)
+      objs.append(obj)
+ 
+    deps = [path.join('obj', d, d + '.a') for d in deps]
+  
+    output = self.get_obj_path(name)
+    self.writer_.build(output, 'link', deps + objs)
+    self.writer_.build(name, 'phony', output)
 
 def GenerateSubninjas():
   sources = [
@@ -111,15 +138,14 @@ def GenerateSubninjas():
     'rob/rob_unittest.cc',
   ]
   includes = ['.', 'gtest/include']
-  libraries = ['libgtest', 'librob']
-  # Executable('rob_unit', sources, includes)
+  deps = ['libgtest', 'librob']
+  Executable('rob_unittest', sources, includes, deps)
 
 
 
 def Main(args):
   GenerateBuild()
   GenerateSubninjas()
-
 
 if __name__ == '__main__':
   Main(sys.argv)
