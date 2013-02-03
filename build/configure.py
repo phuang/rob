@@ -55,9 +55,12 @@ def GenerateBuild():
 class Target(object):
   def __init__(self, name):
     object.__init__(self)
+    self.name_ = name
     self.obj_path_ = path.join('obj', name)
     self.ninja_ = path.join('out', self.obj_path_, 'build.ninja')
-    self.writer_ = CreateWriter(self.ninja_)
+
+  def get_name(self):
+    return self.name_
 
   def get_ninja(self):
     return self.ninja_
@@ -65,52 +68,70 @@ class Target(object):
   def get_obj_path(self, name):
     return path.join(self.obj_path_, name)
 
+  def get_writer(self):
+    return CreateWriter(self.ninja_)
+
+  def generate(self):
+    raise NotImplemented()
+
 class Library(Target):
   def __init__(self, name, sources, includes):
     Target.__init__(self, name)
-    
-    includes = ['-I%s' % path.join(topdir, i) for i in includes]
-    self.writer_.variable('includes', ' '.join(includes))
-    self.writer_.variable('cflags', cflags)
+    self.sources_ = sources
+    self.includes_ = includes
+  
+  def generate(self):
+    writer = self.get_writer()
 
-    self.writer_.newline()
+    includes = ['-I%s' % path.join(topdir, i) for i in self.includes_]
+    
+    writer.variable('includes', ' '.join(includes))
+    writer.variable('cflags', cflags)
+
+    writer.newline()
 
     objs = []
-    for src in sources:
+    for src in self.sources_:
       fname, fext = src.rsplit('.', 1)
-      obj = path.join('obj', name, fname + '.o')
+      obj = self.get_obj_path(fname + '.o')
       src = path.join(topdir, src)
-      self.writer_.build(obj, 'cxx', src)
+      writer.build(obj, 'cxx', src)
       objs.append(obj)
  
-    output = self.get_obj_path(name) + '.a'
-    self.writer_.build(output, 'alink_thin', objs)
-    self.writer_.build(name, 'phony', output)
+    output = self.get_obj_path(self.get_name() + '.a')
+    writer.build(output, 'alink_thin', objs)
+    writer.build(self.get_name(), 'phony', output)
 
 class Executable(Target):
   def __init__(self, name, sources, includes, deps):
     Target.__init__(self, name)
+    self.sources_ = sources
+    self.includes_ = includes
+    self.deps_ = deps
     
-    includes = ['-I%s' % path.join(topdir, i) for i in includes]
-    self.writer_.variable('includes', ' '.join(includes))
-    self.writer_.variable('cflags', cflags)
-    self.writer_.variable('ldflags', ldflags)
+  def generate(self):
+    writer = self.get_writer()
 
-    self.writer_.newline()
+    includes = ['-I%s' % path.join(topdir, i) for i in self.includes_]
+    writer.variable('includes', ' '.join(includes))
+    writer.variable('cflags', cflags)
+    writer.variable('ldflags', ldflags)
+
+    writer.newline()
 
     objs = []
-    for src in sources:
+    for src in self.sources_:
       fname, fext = src.rsplit('.', 1)
-      obj = path.join('obj', name, fname + '.o')
+      obj = self.get_obj_path(fname + '.o')
       src = path.join(topdir, src)
-      self.writer_.build(obj, 'cxx', src)
+      writer.build(obj, 'cxx', src)
       objs.append(obj)
  
-    deps = [path.join('obj', d, d + '.a') for d in deps]
+    deps = [path.join('obj', d, d + '.a') for d in self.deps_]
   
-    output = self.get_obj_path(name)
-    self.writer_.build(output, 'link', deps + objs)
-    self.writer_.build(name, 'phony', output)
+    output = self.get_obj_path(self.get_name())
+    writer.build(output, 'link', deps + objs)
+    writer.build(self.get_name(), 'phony', output)
 
 def GenerateSubninjas():
   sources = [
@@ -118,7 +139,7 @@ def GenerateSubninjas():
     'gtest/src/gtest_main.cc',
   ]
   includes = [ 'gtest', 'gtest/include']
-  Library('libgtest', sources, includes)
+  Library('libgtest', sources, includes).generate()
   
   sources = [
     'rob/condition.cc',
@@ -132,15 +153,14 @@ def GenerateSubninjas():
     'rob/variant.cc'
   ]
   includes = ['.']
-  Library('librob', sources, includes)
+  Library('librob', sources, includes).generate()
   
   sources = [
     'rob/rob_unittest.cc',
   ]
   includes = ['.', 'gtest/include']
   deps = ['libgtest', 'librob']
-  Executable('rob_unittest', sources, includes, deps)
-
+  Executable('rob_unittest', sources, includes, deps).generate()
 
 
 def Main(args):
