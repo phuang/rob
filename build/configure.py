@@ -123,12 +123,12 @@ def GenerateSubninjas():
   sources = [
     'rob/condition.cc',
     'rob/meta_type.cc',
-    'rob/object.cc',
-    'rob/rob.cc',
-    'rob/thread.cc',
     'rob/meta_object.cc',
     'rob/mutex.cc',
+    'rob/object.cc',
     'rob/read_write_lock.cc',
+    'rob/rob.cc',
+    'rob/thread.cc',
     'rob/variant.cc'
   ]
   includes = ['.']
