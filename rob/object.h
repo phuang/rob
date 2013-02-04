@@ -23,8 +23,8 @@ class ROB_EXPORT Object {
   Object() {}
   virtual ~Object() {}
 
-  const std::string& object_name() const;
-  void set_object_name(const std::string& name);
+  R_SLOT const std::string& object_name() const;
+  R_SLOT void set_object_name(const std::string& name);
 
   bool set_property(const char* name, const Variant& prop);
   const Variant& property(const char* name) const;

@@ -5,6 +5,7 @@ from lexer import Lexer
 class Parser(Lexer):
   def __init__(self):
     super(Parser, self).__init__()
+    self.status_ = []
 
   def HasNext(self):
     return self.index_ < len(self.tokens_)
@@ -58,3 +59,13 @@ class Parser(Lexer):
           brace_count <= 0 and brack_count <= 0 and paren_count <= 0:
         return True
     return False
+
+  def PushStatus(self):
+    self.status_.append(self.index_)
+
+  def PopStatus(self):
+    self.index_ = self.status_.pop()
+
+  def ForgetStatus(self):
+    self.status_ = []
+

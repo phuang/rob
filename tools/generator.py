@@ -34,9 +34,9 @@ class Generator(object):
     def GenerateFunc(f):
       out.append('  %d, %d, %d, %d,' % (
         AddString(s.name),
-        AddString(','.join([t for t, n in s.params])),
+        AddString(','.join([str(t) for t, n in s.params])),
         AddString(','.join([n for t, n in s.params])),
-        AddString(s.type if s.type != 'void' else ''),
+        AddString(s.type if not s.type.is_void() else ''),
       ))
 
     if clazz.signals:
@@ -111,17 +111,14 @@ class Generator(object):
     out.append('    case MetaObject::INVOKE_META_METHOD: {')
     out.append('      switch(_id) {')
     def GenerateFunctionCall(func):
-      args = ['              *reinterpret_cast<%s*>(_a[%d])' % (t, i + 1)
+      args = ['*reinterpret_cast<%s*>(_a[%d])' % (t.tostring_with_const(), i + 1)
           for i, (t, n) in enumerate(func.params)]
       prefix = ''
-      if func.type != 'void':
-        out.append('          %s* _r = reinterpret_cast<%s*>(_a[0]);' % (func.type, func.type))
-        prefix = '*_r = '
-      if args:
-        out.append('          %s%s::%s(' % (prefix, clazz.name, func.name))
-        out.append('%s);' % ',\n'.join(args))
-      else:
-        out.append('          *_r = %s::%s();' % (clazz.name, func.name))
+      if not func.type.is_void():
+        prefix = 'const %s _r = ' % func.type
+      out.append('          %s%s::%s(%s);' % (prefix, clazz.name, func.name, ','.join(args)))
+      if not func.type.is_void():
+        out.append('          if (_a[0]) *reinterpret_cast<%s*>(_a[0]) = _r;' % func.type)
 
     methods = clazz.signals + clazz.slots
     for i, f in enumerate(methods):
@@ -141,8 +138,7 @@ class Generator(object):
     out.append('      switch(_id) {')
     for i, p in enumerate(clazz.properties):
       out.append('        case %d: {' % i)
-      out.append('          %s* _v = reinterpret_cast<%s*>(_a[0]);' % (p.type, p.type))
-      out.append('          *_v = %s::%s();' % (clazz.name, p.read))
+      out.append('          *reinterpret_cast<%s*>(_a[0]) = %s::%s();' % (p.type, clazz.name, p.read))
       out.append('          break;')
       out.append('        }')
     out.append('      }')
@@ -159,8 +155,7 @@ class Generator(object):
       if not p.write:
         continue
       out.append('        case %d: {' % i)
-      out.append('          const %s* _v = reinterpret_cast<%s*>(_a[1]);' % (p.type, p.type))
-      out.append('          %s::%s(*_v);' % (clazz.name, p.write))
+      out.append('          %s::%s(*reinterpret_cast<%s*>(_a[1]));' % (clazz.name, p.write, p.type))
       out.append('          break;')
       out.append('        }')
     out.append('      }')
@@ -180,11 +175,11 @@ class Generator(object):
     if clazz.namespace:
       out.append('namespace %s {' % clazz.namespace)
       out.append('')
-    
+
     self.GenerateMetaData(clazz, out)
     self.GenerateMetaObject(clazz, out)
     self.GenerateMetaFunc(clazz, out)
-    
+
     if clazz.namespace:
       out.append('}  // namespace %s' % clazz.namespace)
       out.append('')

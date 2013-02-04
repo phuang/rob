@@ -39,7 +39,6 @@ class Moc(Parser):
         if is_const:
           raise Exception('Duplicate const.')
         is_const = True
-        type.append('const')
         continue
       if self.Test('SIGNED'):
         if has_signed_or_unsigned:
@@ -72,21 +71,83 @@ class Moc(Parser):
     else:
       raise Exception('Parse type error')
 
+    while self.Test('*'):
+      is_pointer = True
+      is_void = False
+      type.append('*')
+
     if self.Test('&'):
       if is_void:
         raise Exception('Parse type error void &')
       is_ref = True
-      type.append('&')
-    elif self.Test('*'):
-      is_pointer = True
-      type.append('*')
-      if self.Test('CONST'):
-        type.append('const')
-    return ' '.join(type)
+
+    return TypeDef(' '.join(type), is_const, is_ref)
+
+  def ParseParameters(self):
+    if not self.Test('('):
+      raise Exception('Parse slot failed: expect \'(\'')
+    params = []
+    while True:
+      if self.Test(')'):
+        break
+      param_type = self.ParseType()
+      if self.Test('SYMBOL'):
+        param_name = self.Lookup(0).value
+      params.append((param_type, param_name))
+
+      if self.Test(')'):
+        break
+      if not self.Test(','):
+        raise Exception('Parse param failed')
+    return params
+
+  def ParseConstructor(self, name):
+    self.PushStatus()
+    if not (self.Test('SYMBOL', name) and self.Test('(')):
+      self.PopStatus()
+      return
+    self.ForgetStatus()
+    self.Prev()
+    params = self.ParseParameters()
+
+    if self.Test('{'):
+      if not self.Until('}'):
+        raise Exception('Parse function failed: EOF')
+    elif not self.Test(';'):
+      raise Exception('Parse slot failed: expect \';\'')
+
+  def ParseDestructor(self, name):
+    self.PushStatus()
+    is_virtual = False
+    if self.Test('VIRTUAL'):
+      is_virtual = True
+
+    if not self.Test('~'):
+      self.PopStatus()
+      return
+
+    self.ForgetStatus()
+
+    if not self.Test('SYMBOL', name):
+      raise Exception('Parse destructor failed')
+
+    if not self.Test('('):
+      raise Exception('Expect `(\'')
+
+    if not self.Test(')'):
+      raise Exception('Expect `)\'')
+
+    if self.Test('{'):
+      if not self.Until('}'):
+        raise Exception('Parse function failed: EOF')
+    elif not self.Test(';'):
+      raise Exception('Parse slot failed: expect \';\'')
 
   def ParseFunction(self):
     is_virtual = False
     is_static = False
+    is_constructor = False
+    is_destructor = False
     while True:
       if self.Test('INLINE'):
          continue
@@ -106,22 +167,8 @@ class Moc(Parser):
       raise Exception('Parse slot failed')
 
     slot_name = self.Lookup(0).value
-    if not self.Test('('):
-      raise Exception('Parse slot failed: expect \'(\'')
 
-    params = []
-    while True:
-      if self.Test(')'):
-        break
-      param_type = self.ParseType()
-      if self.Test('SYMBOL'):
-        param_name = self.Lookup(0).value
-      params.append((param_type, param_name))
-
-      if self.Test(')'):
-        break
-      if not self.Test(','):
-        raise Exception('Parse param failed')
+    params = self.ParseParameters()
 
     self.Test('CONST')
 
@@ -134,13 +181,11 @@ class Moc(Parser):
     if self.Test('{'):
       if not self.Until('}'):
         raise Exception('Parse function failed: EOF')
-    elif self.Test(';'):
-      pass
-    else:
+    elif not self.Test(';'):
       raise Exception('Parse slot failed: expect \';\'')
     return FunctionDef(slot_name, is_static, is_virtual, slot_type, params)
 
-  def ParseSlot(self):
+  def ParseSlot(self, class_name):
     if not self.Test('R_SLOT'):
       return None
     return self.ParseFunction()
@@ -241,8 +286,14 @@ class Moc(Parser):
           raise Exception('Parse class error: expect `:\'')
         continue
 
+      # parse constructors
+      self.ParseConstructor(class_name)
+
+      # parse destructors
+      self.ParseDestructor(class_name)
+
       # Parse slot
-      slot_def = self.ParseSlot()
+      slot_def = self.ParseSlot(class_name)
       if slot_def:
         if access != 'PUBLIC':
           raise Exception('Slot must be public')
@@ -344,15 +395,15 @@ class Moc(Parser):
         break
       self.tokens_.append(t)
     classes = self.Parse()
-    
+
     if not classes:
       print >> sys.stderr, 'No classes find'
       return
-    
+
     out = file(output, 'w') if output else sys.stdout
     generator = Generator()
     print >> out, generator.Generate(self.filename_, classes)
-   
+
     if dep:
       out = file(dep, 'w')
       scripts = [
@@ -375,7 +426,7 @@ def Main(args):
   filenames.append(None)
   filenames.append(None)
   input, output, dep = filenames[:3]
-  
+
   moc.ParseFile(input, output, dep)
 
 

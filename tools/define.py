@@ -1,12 +1,25 @@
 from cStringIO import StringIO
 
 class TypeDef(object):
-  def __init__(self, name):
+  def __init__(self, name, is_const, is_ref):
     object.__init__(self)
     self.name = name
+    self.is_const = is_const
+    self.is_ref = is_ref
+
+  def is_void(self):
+    return self.name == 'void'
+
+  def tostring_with_const(self):
+    if self.is_const:
+      return "const %s" % self.__str__()
+    return self.__str__()
 
   def __str__(self):
     return self.name
+
+  def __len__(self):
+    return len(self.__str__())
 
   def __repr__(self):
     return 'TypeDef[%s]' % self.__str__()
@@ -41,8 +54,6 @@ class PropertyDef(object):
 
   def __repr__(self):
     return 'PropertyDef[%s]' % self.__str__()
-
-
 
 class ClassDef(object):
   def __init__(self, name, parent, parent_access):
