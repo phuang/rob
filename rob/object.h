@@ -17,12 +17,15 @@ class Variant;
 
 class ROB_EXPORT Object {
   R_OBJECT;
- public:
-  Object();
-  virtual ~Object();
+  R_PROPERTY(std::string object_name READ object_name WRITE set_object_name);
 
-  void set_object_name(const char* name);
+ public:
+  Object() {}
+  virtual ~Object() {}
+
   const std::string& object_name() const;
+  void set_object_name(const std::string& name);
+
   bool set_property(const char* name, const Variant& prop);
   const Variant& property(const char* name) const;
 
@@ -30,7 +33,7 @@ class ROB_EXPORT Object {
   virtual int MetaCall(int id, void** args);
 
  private:
-
+  std::string object_name_;
 };
 
 }  // namespace rob

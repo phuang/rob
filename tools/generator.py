@@ -160,7 +160,7 @@ class Generator(object):
         continue
       out.append('        case %d: {' % i)
       out.append('          const %s* _v = reinterpret_cast<%s*>(_a[1]);' % (p.type, p.type))
-      out.append('          *%s::%s(*_v);' % (clazz.name, p.read))
+      out.append('          %s::%s(*_v);' % (clazz.name, p.write))
       out.append('          break;')
       out.append('        }')
     out.append('      }')
