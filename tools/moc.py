@@ -332,7 +332,7 @@ class Moc(Parser):
 
     return classes
 
-  def ParseFile(self, filename, output):
+  def ParseFile(self, filename, output, dep):
     data = open(filename).read()
     self.SetData(filename, data)
     self.filename_ = filename
@@ -349,18 +349,34 @@ class Moc(Parser):
       print >> sys.stderr, 'No classes find'
       return
     
-    output = file(output, 'w') if output else sys.stdout
+    out = file(output, 'w') if output else sys.stdout
     generator = Generator()
-    print >> output, generator.Generate(self.filename_, classes)
+    print >> out, generator.Generate(self.filename_, classes)
+   
+    if dep:
+      out = file(dep, 'w')
+      scripts = [
+        'define.py',
+        'generator.py',
+        'lexer.py',
+        'moc.py',
+        'option.py',
+        'parser.py',
+      ]
+      dirname = path.dirname(__file__)
+      deps = ' '.join([path.join(dirname, f) for f in scripts])
+      print >> out, '%s: %s' % (output, deps)
+
 
 def Main(args):
   filenames = ParseOptions(args)
 
   moc = Moc()
   filenames.append(None)
-  input, output = filenames[:2]
+  filenames.append(None)
+  input, output, dep = filenames[:3]
   
-  moc.ParseFile(input, output)
+  moc.ParseFile(input, output, dep)
 
 
 if __name__ == '__main__':

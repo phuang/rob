@@ -45,7 +45,7 @@ def GenerateBuild():
   out.rule('alink', 'rm -f $out && $ar rcs $out $in', 'AR $out')
   out.rule('alink_thin', 'rm -f $out && $ar rcsT $out $in', 'AR $out')
   out.rule('link', '$ld $ldflags -o $out -Wl,--start-group $in $solibs -Wl,--end-group $libs', 'LINK $out')  
-  out.rule('moc', '$moc $in $out', 'MOC $out')
+  out.rule('moc', '$moc $in $out $out.d', 'MOC $out', '$out.d')
 
   out.newline()
   out.subninja('out/obj/libgtest/build.ninja')
