@@ -123,13 +123,15 @@ class Generator(object):
       else:
         out.append('          *_r = %s::%s();' % (clazz.name, func.name))
 
-    for i, f in enumerate(clazz.signals + clazz.slots):
+    methods = clazz.signals + clazz.slots
+    for i, f in enumerate(methods):
       out.append('        case %d: {' % i)
       GenerateFunctionCall(f)
       out.append('          break;')
       out.append('        }')
     out.append('      }');
-    out.append('      _id -= %d;' % (i + 1));
+    if methods:
+      out.append('      _id -= %d;' % len(methods));
     out.append('      break;');
     out.append('    }');
     out.append('');
@@ -144,7 +146,8 @@ class Generator(object):
       out.append('          break;')
       out.append('        }')
     out.append('      }')
-    out.append('      _id -= %d;' % (i + 1))
+    if clazz.properties:
+      out.append('      _id -= %d;' % len(clazz.properties))
     out.append('      break;')
     out.append('    }')
     out.append('');
@@ -161,7 +164,8 @@ class Generator(object):
       out.append('          break;')
       out.append('        }')
     out.append('      }')
-    out.append('      _id -= %d;' % (i + 1))
+    if clazz.properties:
+      out.append('      _id -= %d;' % len(clazz.properties))
     out.append('      break;')
     out.append('    }')
     out.append('');

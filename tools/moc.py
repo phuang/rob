@@ -287,11 +287,7 @@ class Moc(Parser):
     namespaces = []
     classes = []
     while self.HasNext():
-      namespace = self.ParseNamespace()
-      if namespace:
-        namespaces.append(namespace)
-        self.index_ = namespace.begin
-        continue
+      if self.Test('COMMENT'): continue
       if self.Test(';'): continue
       if self.Test('}'): continue
       if self.Test('INCLUDE'): continue
@@ -305,6 +301,12 @@ class Moc(Parser):
 
       if self.Test('USING'):
         self.Until(';')
+        continue
+
+      namespace = self.ParseNamespace()
+      if namespace:
+        namespaces.append(namespace)
+        self.index_ = namespace.begin
         continue
 
       class_index = self.index_
@@ -328,13 +330,12 @@ class Moc(Parser):
       p2 = self.index_
       self.index_ = p1 if p1 <= p2 else p2
 
-    generator = Generator()
-    print generator.Generate(self.filename_, classes)
+    return classes
 
-  def ParseFile(self, filename):
+  def ParseFile(self, filename, output):
     data = open(filename).read()
     self.SetData(filename, data)
-    self.filename_ = path.basename(filename)
+    self.filename_ = filename
     self.tokens_ = []
     self.index_ = 0
     while True:
@@ -342,15 +343,24 @@ class Moc(Parser):
       if t is None:
         break
       self.tokens_.append(t)
-    self.Parse()
-
+    classes = self.Parse()
+    
+    if not classes:
+      print >> sys.stderr, 'No classes find'
+      return
+    
+    output = file(output, 'w') if output else sys.stdout
+    generator = Generator()
+    print >> output, generator.Generate(self.filename_, classes)
 
 def Main(args):
   filenames = ParseOptions(args)
 
   moc = Moc()
-  for f in filenames:
-    moc.ParseFile(f)
+  filenames.append(None)
+  input, output = filenames[:2]
+  
+  moc.ParseFile(input, output)
 
 
 if __name__ == '__main__':
