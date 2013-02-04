@@ -1,27 +1,13 @@
 from build import *
+import glob
+import os.path as path
+
+srcdir = 'rob'
 
 def get_targets():
   targets = []
-  sources = [
-    'gtest/src/gtest-all.cc',
-    'gtest/src/gtest_main.cc',
-  ]
-  includes = [ 'gtest', 'gtest/include']
-  lib = Library('libgtest', sources, includes)
-  lib.generate()
-  targets.append(lib)
-  
-  sources = [
-    'rob/condition.cc',
-    'rob/meta_type.cc',
-    'rob/meta_object.cc',
-    'rob/mutex.cc',
-    'rob/object.cc',
-    'rob/read_write_lock.cc',
-    'rob/rob.cc',
-    'rob/thread.cc',
-    'rob/variant.cc'
-  ]
+
+  sources =  filter(lambda f: f[-8:] != '_test.cc', glob.glob(path.join(srcdir, '*.cc')))
   moc_headers = [
     'rob/object.h',
   ]
@@ -30,14 +16,14 @@ def get_targets():
   lib.generate()
   targets.append(lib)
   
-  sources = [
-    'rob/object_test.cc',
-    'rob/rob_unittest.cc',
-  ]
-  includes = ['.', 'gtest/include']
+  sources = glob.glob(path.join(srcdir, '*_test.cc'))
   deps = ['libgtest', 'librob']
+  includes = ['.', 'gtest/include']
   test = Executable('rob_unittest', sources, includes, deps)
   test.generate()
   targets.append(test)
   
   return targets
+
+if __name__ == '__main__':
+  pass

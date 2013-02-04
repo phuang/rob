@@ -54,7 +54,6 @@ def GenerateSubninjas():
 
 def Main(args):
   GenerateBuild()
-  GenerateSubninjas()
 
 if __name__ == '__main__':
   Main(sys.argv)

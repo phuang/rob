@@ -6,4 +6,4 @@
 #   --include=build/common.gypi \
 #   build/all.gyp $*
 
-./build/configure.py $*
+(cd `dirname $0`; ./build/configure.py $*)
