@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import imp
 import os
 import os.path as path
 import sys
@@ -32,51 +33,24 @@ def GenerateBuild():
   out.rule('moc', '$moc $in $out $out.d', 'MOC $out', '$out.d')
 
   out.newline()
-  out.subninja('out/obj/libgtest/build.ninja')
-  out.subninja('out/obj/librob/build.ninja')
-  out.subninja('out/obj/rob_unittest/build.ninja')
+  targets = GenerateSubninjas()
+
+  for target in targets:
+    out.subninja(target.get_ninja())
 
   out.newline()
-  all = [
-    'out/obj/libgtest/libgtest.a',
-    'out/obj/librob/librob.a',
-    'out/obj/rob_unittest/rob_unittest'
-  ]
+  all = [ target.get_name() for target in targets]
   out.build('all', 'phony', all)
 
 def GenerateSubninjas():
-  sources = [
-    'gtest/src/gtest-all.cc',
-    'gtest/src/gtest_main.cc',
-  ]
-  includes = [ 'gtest', 'gtest/include']
-  Library('libgtest', sources, includes).generate()
-  
-  sources = [
-    'rob/condition.cc',
-    'rob/meta_type.cc',
-    'rob/meta_object.cc',
-    'rob/mutex.cc',
-    'rob/object.cc',
-    'rob/read_write_lock.cc',
-    'rob/rob.cc',
-    'rob/thread.cc',
-    'rob/variant.cc'
-  ]
-  moc_headers = [
-    'rob/object.h',
-  ]
-  includes = ['.']
-  Library('librob', sources, includes, moc_headers).generate()
-  
-  sources = [
-    'rob/object_test.cc',
-    'rob/rob_unittest.cc',
-  ]
-  includes = ['.', 'gtest/include']
-  deps = ['libgtest', 'librob']
-  Executable('rob_unittest', sources, includes, deps).generate()
-
+  targets = []
+  for root, dirs, files in os.walk('.'):
+    if 'config.py' not in files:
+      continue
+    configfile = path.join(root, 'config.py')
+    config = imp.load_source('config', configfile)
+    targets += config.get_targets()
+  return targets
 
 def Main(args):
   GenerateBuild()

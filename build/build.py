@@ -47,6 +47,7 @@ class Target(object):
   def generate(self):
     raise NotImplemented()
 
+
 class Library(Target):
   def __init__(self, name, sources, includes, moc_headers = []):
     Target.__init__(self, name)
@@ -84,6 +85,7 @@ class Library(Target):
     output = self.get_obj_path(self.get_name() + '.a')
     writer.build(output, 'alink_thin', objs)
     writer.build(self.get_name(), 'phony', output)
+
 
 class Executable(Target):
   def __init__(self, name, sources, includes, deps=[], moc_headers=[]):
