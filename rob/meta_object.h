@@ -28,21 +28,19 @@ class ROB_EXPORT MetaMethod {
   unsigned int handle_;
 };
 
-class ROB_EXPORT MetaObject {
- public:
+struct ROB_EXPORT MetaObject {
   enum Call {
     INVOKE_META_METHOD,
     READ_PROPERTY,
     WRITE_PROPERTY,
     INDEX_OF_METHOD,
   };
-  MetaObject();
-  virtual ~MetaObject();
 
- protected:
-
- private:
-
+  struct {
+    const MetaObject* superdata;
+    const char* stringdata;
+    const unsigned int* data;
+  } d;
 };
 
 }  // namespace rob

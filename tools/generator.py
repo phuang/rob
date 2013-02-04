@@ -70,9 +70,9 @@ class Generator(object):
     return '\n'.join(out)
 
   def GenerateMetaObject(self, clazz, out):
-    out.append('const MetaObject %s::static_meta_object = {' % clazz.name)
+    out.append('const MetaObject %s::static_meta_object_ = {' % clazz.name)
     if clazz.parent:
-      out.append('  &%s::static_meta_object,' % clazz.parent)
+      out.append('  &%s::static_meta_object_,' % clazz.parent)
     else:
       out.append('  NULL,')
     out.append('  meta_string_data_%s,' % clazz.name)
@@ -83,7 +83,7 @@ class Generator(object):
   def GenerateMetaFunc(self, clazz, out):
     # virtual const MetaObject* Class::meta_object() const
     out.append('const MetaObject* %s::meta_object() const {' % clazz.name)
-    out.append('  return &static_meta_object;')
+    out.append('  return &static_meta_object_;')
     out.append('}')
     out.append('')
 
@@ -177,9 +177,17 @@ class Generator(object):
     out.append('')
 
   def GenerateClass(self, clazz, out):
+    if clazz.namespace:
+      out.append('namespace %s {' % clazz.namespace)
+      out.append('')
+    
     self.GenerateMetaData(clazz, out)
     self.GenerateMetaObject(clazz, out)
     self.GenerateMetaFunc(clazz, out)
+    
+    if clazz.namespace:
+      out.append('}  // namespace %s' % clazz.namespace)
+      out.append('')
 
   def GenerateHeader(self, filename, out):
     out.append('/* Meta object code from reading C++ file \'%s\'' % filename)
@@ -189,6 +197,9 @@ class Generator(object):
     out.append(' */')
     out.append('#include "%s"' % filename)
     out.append('')
+    out.append('#include <cstring>')
+    out.append('')
+    out.append('using rob::MetaObject;')
 
   def Generate(self, filename, classes):
     out = []

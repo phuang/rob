@@ -6,11 +6,12 @@
 
 #define R_OBJECT \
  public: \
-  static const MetaObject static_meta_object_; \
   virtual const MetaObject *meta_object() const; \
-  virtual int ROB_MetaCall(MetaObject::Call, int, void **); \
+  virtual int meta_call(MetaObject::Call, int, void **); \
+  virtual void* meta_cast(const char* name); \
  private: \
-  static void ROB_StaticMetaCall(Object *, MetaObject::Call, int, void**);
+  static void static_meta_call(Object *, MetaObject::Call, int, void**); \
+  static const MetaObject static_meta_object_;
 
 #define R_SLOT
 #define R_SIGNAL
