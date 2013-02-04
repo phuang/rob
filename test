@@ -1,2 +1,2 @@
 #!/bin/sh
-ninja -C out/Debug/ rob_unittests && ./out/Debug/rob_unittests
+ninja rob_unittest && ./out/obj/rob_unittest/rob_unittest

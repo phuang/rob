@@ -29,9 +29,6 @@ class ROB_EXPORT Object {
   bool set_property(const char* name, const Variant& prop);
   const Variant& property(const char* name) const;
 
- protected:
-  virtual int MetaCall(int id, void** args);
-
  private:
   std::string object_name_;
 };
