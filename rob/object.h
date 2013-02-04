@@ -27,7 +27,7 @@ class ROB_EXPORT Object {
   R_SLOT void set_object_name(const std::string& name);
 
   bool set_property(const char* name, const Variant& prop);
-  const Variant& property(const char* name) const;
+  const Variant property(const char* name) const;
 
  private:
   std::string object_name_;

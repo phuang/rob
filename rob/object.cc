@@ -13,4 +13,11 @@ void Object::set_object_name(const std::string& name) {
   object_name_ = name;
 }
 
+bool Object::set_property(const char* name, const Variant& prop) {
+}
+
+const Variant Object::property(const char* name) const {
+  return Variant();
+}
+
 }  // namespace rob
