@@ -3,7 +3,6 @@
 #include "gtest/include/gtest/gtest.h"
 #include "rob/meta_type.h"
 #include "rob/mutex.h"
-#include "rob/object.h"
 #include "rob/variant.h"
 
 namespace rob {
@@ -69,12 +68,6 @@ TEST(Thread, TestMutex) {
   {
     MutexUnlocker unlocker(&m);
   }
-}
-
-TEST(Core, Object) {
-  Object obj;
-  obj.set_object_name("object 1");
-  EXPECT_EQ("object 1", obj.object_name());
 }
 
 }  // namespace rob

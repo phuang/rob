@@ -186,6 +186,7 @@ def GenerateSubninjas():
   Library('librob', sources, includes, moc_headers).generate()
   
   sources = [
+    'rob/object_test.cc',
     'rob/rob_unittest.cc',
   ]
   includes = ['.', 'gtest/include']
