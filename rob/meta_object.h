@@ -36,11 +36,22 @@ struct ROB_EXPORT MetaObject {
     INDEX_OF_METHOD,
   };
 
-  struct {
-    const MetaObject* superdata;
-    const char* stringdata;
-    const unsigned int* data;
-  } d;
+  const char* class_name() const;
+  const char* super_class_name() const;
+
+  int method_offset() const;
+  int property_offset() const;
+
+  int method_count() const;
+  int property_count() const;
+
+  int index_of_method(const char* name) const;
+  int index_of_property(const char* name) const;
+
+  const MetaObject* super_data;
+  const char* string_data;
+  const unsigned int* data;
+
 };
 
 }  // namespace rob

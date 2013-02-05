@@ -8,7 +8,7 @@ class Generator(object):
     METHOD_SIZE = 4
     n_method = len(clazz.slots) + len(clazz.signals)
     n_property = len(clazz.properties)
-    offset = 0
+    offset = 0 #
 
     meta_string_array = []
     meta_string_map = {}
