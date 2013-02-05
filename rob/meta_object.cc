@@ -9,6 +9,7 @@
 namespace rob {
 
 namespace {
+
 struct MetaObjectPrivate {
   unsigned int class_name;
   unsigned int method_count;
@@ -27,6 +28,13 @@ inline const char * _method_name(const MetaObject* m, int index) {
   if (index >=  _priv(m->data)->method_count || index < 0)
     return NULL;
   int i = _priv(m->data)->data[_priv(m->data)->method_offset + index * 4];
+  return m->string_data + i;
+}
+
+inline const char * _property_name(const MetaObject* m, int index) {
+  if (index >=  _priv(m->data)->property_count || index < 0)
+    return NULL;
+  int i = _priv(m->data)->data[_priv(m->data)->property_offset + index * 2];
   return m->string_data + i;
 }
 
@@ -112,7 +120,41 @@ int MetaObject::index_of_method(const char* name) const {
 }
 
 int MetaObject::index_of_property(const char* name) const {
+  std::string buf(name);
+  size_t i = buf.find("::");
+
+  if (i != std::string::npos) {
+    std::string class_name = buf.substr(0,  i);
+    std::string property_name = buf.substr(i + 2);
+    const MetaObject *m = this;
+    while (m) {
+      if (class_name == m->string_data) {
+        for (int i = 0;  i < _priv(m->data)->property_count; i++) {
+          if (property_name == _property_name(m, i))
+            return i + m->property_offset();
+        }
+      }
+      m = m->super_data;
+    }
+  } else {
+    std::string property_name = buf;
+    const MetaObject *m = this;
+    while (m) {
+      for (int i = 0;  i < _priv(m->data)->property_count; i++) {
+          if (property_name == _property_name(m, i))
+            return i + m->property_offset();
+      }
+      m = m->super_data;
+    }
+  }
   return -1;
+}
+
+MetaMethod MetaObject::method(int index) const {
+  return MetaMethod();
+}
+
+const char* MetaObject::property_name(int index) const {
 }
 
 }  // namespace rob

@@ -18,7 +18,7 @@ class ROB_EXPORT MetaMethod {
  public:
   const char* method_signature() const;
   const char* name() const;
-  int returnType() const;
+  int return_type() const;
   int parameter_count() const;
   int parameter_type(int index) const;
   bool invoke(Object *object);
@@ -48,10 +48,12 @@ struct ROB_EXPORT MetaObject {
   int index_of_method(const char* name) const;
   int index_of_property(const char* name) const;
 
+  MetaMethod method(int index) const;
+  const char* property_name(int index) const;
+
   const MetaObject* super_data;
   const char* string_data;
   const unsigned int* data;
-
 };
 
 }  // namespace rob
