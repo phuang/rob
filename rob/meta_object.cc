@@ -90,7 +90,7 @@ int MetaObject::property_count() const {
 
 int MetaObject::index_of_method(const char* name) const {
   std::string buf(name);
-  size_t i = buf.find("::");
+  size_t i = buf.find('.');
 
   if (i != std::string::npos) {
     std::string class_name = buf.substr(0,  i);
@@ -121,7 +121,7 @@ int MetaObject::index_of_method(const char* name) const {
 
 int MetaObject::index_of_property(const char* name) const {
   std::string buf(name);
-  size_t i = buf.find("::");
+  size_t i = buf.find('.');
 
   if (i != std::string::npos) {
     std::string class_name = buf.substr(0,  i);
