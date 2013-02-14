@@ -94,7 +94,7 @@ int MetaObject::index_of_method(const char* name) const {
 
   if (i != std::string::npos) {
     std::string class_name = buf.substr(0,  i);
-    std::string method_name = buf.substr(i + 2);
+    std::string method_name = buf.substr(i + 1);
     const MetaObject *m = this;
     while (m) {
       if (class_name == m->string_data) {
@@ -125,7 +125,7 @@ int MetaObject::index_of_property(const char* name) const {
 
   if (i != std::string::npos) {
     std::string class_name = buf.substr(0,  i);
-    std::string property_name = buf.substr(i + 2);
+    std::string property_name = buf.substr(i + 1);
     const MetaObject *m = this;
     while (m) {
       if (class_name == m->string_data) {
